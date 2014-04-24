@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EtwLiveLog", "EtwLiveLog\EtwLiveLog.vcxproj", "{7D4E7B91-AA2B-41CD-98D6-17D1F0CE1A89}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7D4E7B91-AA2B-41CD-98D6-17D1F0CE1A89}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7D4E7B91-AA2B-41CD-98D6-17D1F0CE1A89}.Debug|Win32.Build.0 = Debug|Win32
+		{7D4E7B91-AA2B-41CD-98D6-17D1F0CE1A89}.Release|Win32.ActiveCfg = Release|Win32
+		{7D4E7B91-AA2B-41CD-98D6-17D1F0CE1A89}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
