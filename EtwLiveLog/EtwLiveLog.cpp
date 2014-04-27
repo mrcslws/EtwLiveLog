@@ -78,7 +78,23 @@ static void WINAPI _HandleEvent(_In_ PEVENT_RECORD per)
 				if (status == ERROR_SUCCESS)
 				{
 					// Timestamp
-					wprintf(L"%llu, ", per->EventHeader.TimeStamp);
+					{
+						FILETIME ft;
+						ft.dwHighDateTime = per->EventHeader.TimeStamp.HighPart;
+						ft.dwLowDateTime = per->EventHeader.TimeStamp.LowPart;
+						SYSTEMTIME st;
+						FileTimeToSystemTime(&ft, &st);
+						wchar_t wszDate[100] = { 0 };
+						GetDateFormatEx(LOCALE_NAME_INVARIANT, NULL, &st, L"yyyyy-MM-dd", wszDate, ARRAYSIZE(wszDate), nullptr);
+						wchar_t wszTime[100] = { 0 };
+						GetTimeFormatEx(LOCALE_NAME_INVARIANT, NULL, &st, L"HH:mm:ss", wszTime, ARRAYSIZE(wszTime));
+
+						// yyyy-MM-dd HH:mm:ss:fff
+						// Windows refuses to give us milliseconds for free, let alone fractions of milliseconds
+						wprintf(L"%s ", wszDate);
+						wprintf(L"%s", wszTime);
+						wprintf(L".%03hu, ", st.wMilliseconds);
+					}
 
 					// Provider name or GUID
 					if (ptei->ProviderNameOffset != 0)
@@ -102,6 +118,7 @@ static void WINAPI _HandleEvent(_In_ PEVENT_RECORD per)
 					}
 					else
 					{
+						// printf converts 8-bit chars to 16-bit ints, in case you don't know
 						wprintf(L"%hu, ", per->EventHeader.EventDescriptor.Task);
 					}
 
@@ -119,7 +136,7 @@ static void WINAPI _HandleEvent(_In_ PEVENT_RECORD per)
 					}
 
 					// endl
-					wprintf(L"\r\n");
+					wprintf(L"\n");
 				}
 
 				free(ptei);
