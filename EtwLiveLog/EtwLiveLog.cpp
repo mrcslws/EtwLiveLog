@@ -89,11 +89,11 @@ static void WINAPI _HandleEvent(_In_ PEVENT_RECORD per)
 						wchar_t wszTime[100] = { 0 };
 						GetTimeFormatEx(LOCALE_NAME_INVARIANT, NULL, &st, L"HH:mm:ss", wszTime, ARRAYSIZE(wszTime));
 
-						// yyyy-MM-dd HH:mm:ss:fff
+						// yyyy-MM-dd HH:mm:ss:fffffff
 						// Windows refuses to give us milliseconds for free, let alone fractions of milliseconds
 						wprintf(L"%s ", wszDate);
 						wprintf(L"%s", wszTime);
-						wprintf(L".%03hu, ", st.wMilliseconds);
+                        wprintf(L".%07u, ", ft.dwLowDateTime % ((1000000000 /*nanoseconds per second*/) / (100 /* nanoseconds per interval */)));
 					}
 
 					// Provider name or GUID
