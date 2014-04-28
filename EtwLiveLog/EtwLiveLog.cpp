@@ -84,6 +84,7 @@ static void WINAPI _HandleEvent(_In_ PEVENT_RECORD per)
                         ft.dwLowDateTime = per->EventHeader.TimeStamp.LowPart;
                         SYSTEMTIME st;
                         FileTimeToSystemTime(&ft, &st);
+                        SystemTimeToTzSpecificLocalTime(nullptr, &st, &st);
                         wchar_t wszDate[100];
                         GetDateFormatEx(LOCALE_NAME_INVARIANT, NULL, &st, L"yyyyy-MM-dd", wszDate, ARRAYSIZE(wszDate), nullptr);
                         wchar_t wszTime[100];
