@@ -97,6 +97,9 @@ static void WINAPI _HandleEvent(_In_ PEVENT_RECORD per)
                         wprintf(L".%07u, ", ft.dwLowDateTime % ((1000000000 /*nanoseconds per second*/) / (100 /* nanoseconds per interval */)));
                     }
 
+                    // Thread ID
+                    wprintf(L"Thread %lu, ", per->EventHeader.ThreadId);
+
                     // Provider name or GUID
                     if (ptei->ProviderNameOffset != 0)
                     {
