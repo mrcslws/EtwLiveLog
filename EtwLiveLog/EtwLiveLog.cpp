@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "EventPayload.h"
 
 #define USAGE L"Usage:\r\n EtwLiveLog.exe [RealtimeSessionName]\r\n\r\nUse a different tool like xperf.exe to start a realtime session, then consume it from here."
 
@@ -7,7 +8,7 @@ static bool _s_fIsClosed = false;
 
 static void WINAPI _HandleEvent(_In_ PEVENT_RECORD per);
 
-int __cdecl _tmain(int argc, _TCHAR* argv[])
+int __cdecl wmain(int argc, wchar_t* argv[])
 {
     bool fPrintUsage = true;
     if (argc == 2)
@@ -67,13 +68,13 @@ static void WINAPI _HandleEvent(_In_ PEVENT_RECORD per)
     {
         PTRACE_EVENT_INFO ptei = nullptr;
 
-        // Populate ptei. This isn't available for non-manifest events
+        // Populate ptei.
         {
             DWORD cbEventInfo = 0;
             DWORD status = TdhGetEventInformation(per, 0, nullptr, nullptr, &cbEventInfo);
             if (ERROR_INSUFFICIENT_BUFFER == status)
             {
-                PTRACE_EVENT_INFO ptei = (TRACE_EVENT_INFO*)malloc(cbEventInfo);
+                ptei = (TRACE_EVENT_INFO*)malloc(cbEventInfo);
                 if (ptei != nullptr)
                 {
                     status = TdhGetEventInformation(per, 0, nullptr, ptei, &cbEventInfo);
@@ -110,52 +111,80 @@ static void WINAPI _HandleEvent(_In_ PEVENT_RECORD per)
         wprintf(L"Thread %lu, ", per->EventHeader.ThreadId);
 
         // Provider name or GUID
-        if (ptei != nullptr && ptei->ProviderNameOffset != 0)
         {
-            wprintf(L"%s, ", (BYTE*)ptei + ptei->ProviderNameOffset);
-        }
-        else
-        {
-            BSTR bstrGuid;
-            if (SUCCEEDED(StringFromCLSID(per->EventHeader.ProviderId, &bstrGuid)))
+            const wchar_t* providerName = ptei ? TEI_PROVIDER_NAME(ptei) : nullptr;
+            if (providerName != nullptr)
             {
-                wprintf(L"%s, ", bstrGuid);
-                ::CoTaskMemFree(bstrGuid);
+                wprintf(L"%s, ", (BYTE*)ptei + ptei->ProviderNameOffset);
+            }
+            else
+            {
+                BSTR bstrGuid;
+                if (SUCCEEDED(StringFromCLSID(per->EventHeader.ProviderId, &bstrGuid)))
+                {
+                    wprintf(L"%s, ", bstrGuid);
+                    ::CoTaskMemFree(bstrGuid);
+                }
             }
         }
 
         // Task name or id
-        if (ptei != nullptr && ptei->TaskNameOffset != 0)
         {
-            wprintf(L"%s, ", (BYTE*)ptei + ptei->TaskNameOffset);
-        }
-        else
-        {
-            // printf converts 8-bit chars to 16-bit ints, in case you don't know
-            wprintf(L"%hu, ", per->EventHeader.EventDescriptor.Task);
-        }
-
-        // Event ID
-        wprintf(L"%hu, ", per->EventHeader.EventDescriptor.Id);
-
-        // Activity ID
-        {
-            BSTR bstrGuid;
-            if (SUCCEEDED(StringFromCLSID(per->EventHeader.ActivityId, &bstrGuid)))
+            const wchar_t* taskName = ptei ? TEI_TASK_NAME(ptei) : nullptr;
+            if (taskName != nullptr)
             {
-                wprintf(L"%s, ", bstrGuid);
-                ::CoTaskMemFree(bstrGuid);
+                wprintf(L"%s, ", taskName);
+            }
+            else
+            {
+                // printf converts 8-bit chars to 16-bit ints, in case you don't know
+                wprintf(L"%hu, ", per->EventHeader.EventDescriptor.Task);
             }
         }
 
+        // Event ID
+        // wprintf(L"%hu, ", per->EventHeader.EventDescriptor.Id);
+
+        // Activity ID
+        //{
+        //    BSTR bstrGuid;
+        //    if (SUCCEEDED(StringFromCLSID(per->EventHeader.ActivityId, &bstrGuid)))
+        //    {
+        //        wprintf(L"%s, ", bstrGuid);
+        //        ::CoTaskMemFree(bstrGuid);
+        //    }
+        //}
+
         // Opcode name or ID
-        if (ptei != nullptr && ptei->OpcodeNameOffset != 0)
         {
-            wprintf(L"%s", (BYTE*)ptei + ptei->OpcodeNameOffset);
+            wchar_t* opcodeName = ptei ? TEI_OPCODE_NAME(ptei) : nullptr;
+            if (opcodeName != nullptr)
+            {
+                wprintf(L"%s, ", (BYTE*)ptei + ptei->OpcodeNameOffset);
+            }
+            else
+            {
+                wprintf(L"%hu, ", per->EventHeader.EventDescriptor.Opcode);
+            }
+        }
+
+        // Payload
+        if (EVENT_HEADER_FLAG_STRING_ONLY == (per->EventHeader.Flags & EVENT_HEADER_FLAG_STRING_ONLY))
+        {
+            wprintf(L"%s", (LPWSTR)per->UserData);
         }
         else
         {
-            wprintf(L"%hu", per->EventHeader.EventDescriptor.Opcode);
+            for (USHORT i = 0; i < ptei->TopLevelPropertyCount; i++)
+            {
+                DWORD status = PrintProperties(per, ptei, i, nullptr, 0);
+                if (ERROR_SUCCESS != status)
+                {
+                    wprintf(L"Printing top level properties failed.");
+                }
+
+                wprintf(L", ");
+            }
         }
 
         // endl
